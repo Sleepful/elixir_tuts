@@ -10,10 +10,21 @@ defmodule KV.Supervisor do
     # children = [
     #   KV.Registry
     # ]
-    children = [
+    # children = [
+    #   {KV.Registry, name: KV.Registry}
+    # ]
+    #
+    # BEFORE THE RIGHT ORDER AND STRATEGY:
+    # children = [
+    #   {KV.Registry, name: KV.Registry},
+    #   {DynamicSupervisor, name: KV.BucketSupervisor, strategy: :one_for_one}
+    # ]
+        children = [
+      {DynamicSupervisor, name: KV.BucketSupervisor, strategy: :one_for_one},
       {KV.Registry, name: KV.Registry}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end

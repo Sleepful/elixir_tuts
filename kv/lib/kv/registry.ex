@@ -51,6 +51,7 @@ defmodule KV.Registry do
     {:reply, Map.fetch(names, name), state}
   end
 
+  # without MONITOR
   # @impl true
   # def handle_cast({:create, name}, names) do
   #   if Map.has_key?(names, name) do
@@ -61,15 +62,29 @@ defmodule KV.Registry do
   #   end
   # end
 
+  # without DYNAMIC SUPERGVISOR
+  # @impl true
+  # def handle_cast({:create, name}, {names, refs}) do
+  #   if Map.has_key?(names, name) do
+  #     {:noreply, {names, refs}}
+  #   else
+  #     {:ok, bucket} = KV.Bucket.start_link([])
+  #     ref = Process.monitor(bucket)
+  #     refs = Map.put(refs, ref, name)
+  #     names = Map.put(names, name, bucket)
+  #     {:noreply, {names, refs}}
+  #   end
+  # end
+
   @impl true
   def handle_cast({:create, name}, {names, refs}) do
     if Map.has_key?(names, name) do
       {:noreply, {names, refs}}
     else
-      {:ok, bucket} = KV.Bucket.start_link([])
-      ref = Process.monitor(bucket)
+      {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
+      ref = Process.monitor(pid)
       refs = Map.put(refs, ref, name)
-      names = Map.put(names, name, bucket)
+      names = Map.put(names, name, pid)
       {:noreply, {names, refs}}
     end
   end
